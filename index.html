@@ -464,8 +464,6 @@
                 errorMessage.textContent = 'Could not fetch GitHub projects. Please try again later.';
             }
         }
-        
-        // --- GitHub Highlight of the Month ---
         async function fetchHighlightRepo() {
             const username = 'akshat1903kk';
             const loading = document.getElementById('highlight-loading');
@@ -473,21 +471,20 @@
             const container = document.getElementById('highlight-container');
 
             try {
-                // 1. Get dates for the *CURRENT* month
+                // 1. Get dates for the *LAST 30 DAYS*
                 const now = new Date();
-                const firstDayCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                const lastDayCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0); 
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(now.getDate() - 30); // Set date to 30 days ago
                 
-                const since = firstDayCurrentMonth.toISOString();
-                const until = lastDayCurrentMonth.toISOString();
-                const monthName = firstDayCurrentMonth.toLocaleString('default', { month: 'long' });
-
+                const since = thirtyDaysAgo.toISOString();
+                const until = now.toISOString();
+                
                 // 2. Fetch all public events (max 100)
                 const response = await fetch(`https://api.github.com/users/${username}/events?per_page=100`);
                 if (!response.ok) throw new Error(`GitHub API error: ${response.statusText}`);
                 const events = await response.json();
 
-                // 3. Filter events for PushEvents in the current month
+                // 3. Filter events for PushEvents in the last 30 days
                 const commitCounts = {};
                 const reposData = {};
 
@@ -495,7 +492,7 @@
                     .filter(event => event.type === 'PushEvent')
                     .filter(event => {
                         const eventDate = new Date(event.created_at);
-                        return eventDate >= firstDayCurrentMonth && eventDate <= lastDayCurrentMonth;
+                        return eventDate >= thirtyDaysAgo && eventDate <= now;
                     })
                     .forEach(event => {
                         const repoName = event.repo.name;
@@ -529,14 +526,14 @@
                     const repoInfo = await repoInfoResponse.json();
                     
                     const cardHTML = `
-                        <div class="glass-panel p-8">
-                            <h3 class="text-sm font-medium text-blue-400 uppercase tracking-wider mb-2">Highlight for ${monthName}</h3>
+                        <div class="manga-panel p-8">
+                            <h3 class="text-sm font-medium text-jojo-gold uppercase tracking-wider mb-2">Highlight (Last 30 Days)</h3>
                             <a href="${repoInfo.html_url}" target="_blank" rel="noopener noreferrer" class="block mb-3">
-                                <h4 class="text-3xl font-bold text-white hover:text-blue-400 transition-colors duration-300">${repoInfo.name}</h4>
+                                <h4 class="text-3xl font-bold text-white hover:text-jojo-gold transition-colors duration-300">${repoInfo.name}</h4>
                             </a>
                             <p class="text-lg text-gray-400 mb-6">${repoInfo.description || 'No description provided.'}</p>
                             <div class="flex items-center text-gray-300">
-                                <svg class="w-5 h-5 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
+                                <svg class="w-5 h-5 mr-2 text-jojo-gold" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
                                 <strong class="text-xl font-semibold mr-1">${maxCommits}</strong> commits
                             </div>
                         </div>
@@ -544,7 +541,7 @@
                     container.innerHTML = cardHTML;
                     container.classList.remove('hidden');
                 } else {
-                    errorMsg.textContent = `No public commits found for ${monthName}.`;
+                    errorMsg.textContent = `No public commits found in the last 30 days.`;
                     errorMsg.classList.remove('hidden');
                 }
 
